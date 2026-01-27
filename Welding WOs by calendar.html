@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welding Work Order Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --gray: #64748b;
+            --light-gray: #e2e8f0;
+            --ready-bg: #dcfce7;
+            --ready-border: #22c55e;
+            --running-bg: #fef3c7;
+            --running-border: #f59e0b;
+            --completed-bg: #dbeafe;
+            --completed-border: #3b82f6;
+        }
+        
+        body {
+            background-color: #f1f5f9;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+        
+        .add-wo-btn {
+            background: white;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .add-wo-btn:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 24px;
+        }
+        
+        @media (max-width: 900px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+        
+        .card-header {
+            background: var(--light);
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--light-gray);
+            font-weight: 600;
+            font-size: 1.2rem;
+            color: var(--primary-dark);
+        }
+        
+        .calendar-container {
+            padding: 20px;
+        }
+        
+        .calendar-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .month-year {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .nav-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        
+        .nav-btn:hover {
+            background: var(--primary-dark);
+        }
+        
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+        }
+        
+        .calendar-day-header {
+            text-align: center;
+            padding: 10px;
+            font-weight: 600;
+            color: var(--gray);
+            background: var(--light);
+            border-radius: 6px;
+        }
+        
+        .calendar-date {
+            height: 80px;
+            background: white;
+            border: 1px solid var(--light-gray);
+            border-radius: 8px;
+            padding: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        
+        .calendar-date:hover {
+            background: #f1f5f9;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .date-number {
+            font-weight: 600;
+            margin-bottom: 4px;
+            display: block;
+        }
+        
+        .today {
+            background: #dbeafe !important;
+            border-color: var(--primary) !important;
+        }
+        
+        .today .date-number {
+            color: var(--primary);
+            font-weight: 700;
+        }
+        
+        .selected {
+            background: #dbeafe !important;
+            border-color: var(--primary) !important;
+        }
+        
+        .work-orders {
+            padding: 20px;
+        }
+        
+        .date-display {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--primary-dark);
+            text-align: center;
+        }
+        
+        .wo-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .wo-item {
+            background: white;
+            border: 2px solid var(--light-gray);
+            border-radius: 10px;
+            padding: 16px;
+            transition: all 0.2s;
+            position: relative;
+        }
+        
+        .wo-item:hover {
+            border-color: var(--primary);
+            transform: translateX(4px);
+        }
+        
+        .edit-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: var(--light-gray);
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .wo-item:hover .edit-btn {
+            opacity: 1;
+        }
+        
+        .edit-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .wo-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .wo-number {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+        }
+        
+        .wo-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .status-ready-text {
+            background: var(--ready-bg);
+            color: var(--success);
+        }
+        
+        .status-running-text {
+            background: var(--running-bg);
+            color: var(--warning);
+        }
+        
+        .status-completed-text {
+            background: var(--completed-bg);
+            color: var(--primary);
+        }
+        
+        .wo-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+        }
+        
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .detail-label {
+            font-size: 0.85rem;
+            color: var(--gray);
+            margin-bottom: 4px;
+        }
+        
+        .detail-value {
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .no-wo {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--gray);
+            font-style: italic;
+        }
+        
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.9rem;
+        }
+        
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+        }
+        
+        .legend-ready { background: var(--ready-bg); border: 1px solid var(--ready-border); }
+        .legend-running { background: var(--running-bg); border: 1px solid var(--running-border); }
+        .legend-completed { background: var(--completed-bg); border: 1px solid var(--completed-border); }
+        
+        .date-range {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .date-range span {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .modal-header {
+            padding: 20px;
+            background: var(--primary);
+            color: white;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+        
+        .close-modal:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .modal-body {
+            padding: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--light-gray);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border 0.2s;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .modal-footer {
+            padding: 20px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            border-top: 1px solid var(--light-gray);
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            font-size: 1rem;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+        
+        .btn-secondary {
+            background: var(--light-gray);
+            color: var(--dark);
+        }
+        
+        .btn-secondary:hover {
+            background: #cbd5e1;
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+        
+        .form-error {
+            color: var(--danger);
+            font-size: 0.85rem;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .delete-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--light-gray);
+        }
+        
+        .delete-section p {
+            margin-bottom: 10px;
+            color: var(--gray);
+        }
+        
+        /* Status indicator badges */
+        .status-badge {
+            position: absolute;
+            bottom: 4px;
+            left: 50%;
+            transform: translateX(-50%);
+            min-width: 20px;
+            height: 20px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+            color: white;
+            padding: 0 4px;
+        }
+        
+        .badge-ready {
+            background-color: var(--ready-border);
+        }
+        
+        .badge-running {
+            background-color: var(--running-border);
+        }
+        
+        .badge-completed {
+            background-color: var(--completed-border);
+        }
+        
+        .instructions {
+            background: #fffbeb;
+            border-left: 4px solid #f59e0b;
+            padding: 12px;
+            margin: 16px 0;
+            border-radius: 0 8px 8px 0;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div>
+                <h1>Welding Work Order Tracker</h1>
+                <p>Easy daily view for associates to see today's work orders with complete details</p>
+            </div>
+            <button class="add-wo-btn" id="open-modal">
+                <span>+</span> Add New WO
+            </button>
+        </header>
+        
+        <div class="dashboard">
+            <div class="card">
+                <div class="card-header">Calendar</div>
+                <div class="calendar-container">
+                    <div class="calendar-nav">
+                        <button class="nav-btn" id="prev-month">&larr; Previous</button>
+                        <div class="month-year" id="current-month">January 2026</div>
+                        <button class="nav-btn" id="next-month">Next &rarr;</button>
+                    </div>
+                    <div class="calendar-grid" id="calendar-days">
+                        <!-- Day headers will be populated by JS -->
+                    </div>
+                    <div class="calendar-grid" id="calendar-grid">
+                        <!-- Calendar dates will be populated by JS -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">Work Orders for Selected Date</div>
+                <div class="work-orders">
+                    <div class="date-display" id="today-display">Tuesday, January 27, 2026</div>
+                    <div class="instructions">
+                        <strong>Note:</strong> Shows only work orders that are scheduled to run on the selected date 
+                        (based on start/end dates). You can start/complete WOs earlier than their due date.
+                    </div>
+                    <div class="wo-list" id="wo-list">
+                        <!-- Work orders will be populated by JS -->
+                    </div>
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-color legend-ready"></div>
+                            <span>Ready to Run</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color legend-running"></div>
+                            <span>In Progress</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color legend-completed"></div>
+                            <span>Completed</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit WO Modal -->
+    <div class="modal" id="add-wo-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Add New Work Order</h2>
+                <button class="close-modal" id="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="wo-form">
+                    <input type="hidden" id="edit-index">
+                    
+                    <div class="form-group">
+                        <label for="wo-id">Work Order ID *</label>
+                        <input type="text" id="wo-id" class="form-control" placeholder="e.g., WO-2026-006" required>
+                        <div class="form-error" id="wo-id-error">Please enter a valid WO ID</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="sku-name">SKU Name *</label>
+                        <input type="text" id="sku-name" class="form-control" placeholder="e.g., SUPP-BRKT-A1-WELD" required>
+                        <div class="form-error" id="sku-name-error">Please enter SKU name</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="quantity">Quantity *</label>
+                        <input type="number" id="quantity" class="form-control" min="1" value="1" required>
+                        <div class="form-error" id="quantity-error">Please enter a valid quantity</div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="start-date">Start Date *</label>
+                            <input type="date" id="start-date" class="form-control" required>
+                            <div class="form-error" id="start-date-error">Please select start date</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="end-date">End Date *</label>
+                            <input type="date" id="end-date" class="form-control" required>
+                            <div class="form-error" id="end-date-error">Please select end date</div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="due-date">Due Date *</label>
+                        <input type="date" id="due-date" class="form-control" required>
+                        <div class="form-error" id="due-date-error">Please select due date</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="status">Status *</label>
+                        <select id="status" class="form-control" required>
+                            <option value="">Select status</option>
+                            <option value="ready">Ready to Run</option>
+                            <option value="running">In Progress</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                        <div class="form-error" id="status-error">Please select status</div>
+                    </div>
+                    
+                    <div class="delete-section" id="delete-section" style="display: none;">
+                        <p><strong>Danger Zone:</strong> Delete this work order permanently?</p>
+                        <button class="btn btn-danger" id="delete-wo">Delete Work Order</button>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancel-wo">Cancel</button>
+                <button class="btn btn-primary" id="submit-wo">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Current date (as per system message)
+        const currentDate = new Date(2026, 0, 27); // January 27, 2026
+        let currentMonth = currentDate.getMonth();
+        let currentYear = currentDate.getFullYear();
+        let editingIndex = -1;
+        let selectedDate = new Date(currentDate); // Track the currently selected date
+        
+        // Enhanced work orders data with start date, end date, and SKU (removed part/job and drawing)
+        let workOrders = [
+            {
+                id: "WO-2026-001",
+                sku: "BRKT-ASSY-45-WELD",
+                quantity: 10,
+                startDate: new Date(2026, 0, 25),
+                endDate: new Date(2026, 0, 28),
+                dueDate: new Date(2026, 0, 27),
+                status: "ready"
+            },
+            {
+                id: "WO-2026-002",
+                sku: "FSB-STD-12MM-WELD",
+                quantity: 5,
+                startDate: new Date(2026, 0, 26),
+                endDate: new Date(2026, 0, 29),
+                dueDate: new Date(2026, 0, 27),
+                status: "running"
+            },
+            {
+                id: "WO-2026-003",
+                sku: "MNT-PLT-08-WELD",
+                quantity: 15,
+                startDate: new Date(2026, 0, 24),
+                endDate: new Date(2026, 0, 27),
+                dueDate: new Date(2026, 0, 27),
+                status: "completed"
+            },
+            {
+                id: "WO-2026-004",
+                sku: "CONN-HSG-22-WELD",
+                quantity: 8,
+                startDate: new Date(2026, 0, 28),
+                endDate: new Date(2026, 0, 31),
+                dueDate: new Date(2026, 0, 28),
+                status: "ready"
+            },
+            {
+                id: "WO-2026-005",
+                sku: "BASE-FRAME-A33-WELD",
+                quantity: 3,
+                startDate: new Date(2026, 0, 27),
+                endDate: new Date(2026, 1, 2),
+                dueDate: new Date(2026, 0, 27),
+                status: "ready"
+            },
+            {
+                id: "WO-2026-006",
+                sku: "SUPPORT-BEAM-01-WELD",
+                quantity: 4,
+                startDate: new Date(2026, 0, 27),
+                endDate: new Date(2026, 0, 30),
+                dueDate: new Date(2026, 0, 29),
+                status: "running"
+            },
+            {
+                id: "WO-2026-007",
+                sku: "MOUNTING-BRACKET-WELD",
+                quantity: 6,
+                startDate: new Date(2026, 0, 27),
+                endDate: new Date(2026, 0, 28),
+                dueDate: new Date(2026, 0, 28),
+                status: "running"
+            },
+            {
+                id: "WO-2026-008",
+                sku: "FRAME-ASSEMBLY-WELD",
+                quantity: 2,
+                startDate: new Date(2026, 0, 28),
+                endDate: new Date(2026, 0, 30),
+                dueDate: new Date(2026, 0, 29),
+                status: "ready"
+            },
+            {
+                id: "WO-2026-009",
+                sku: "SUPPORT-LEG-WELD",
+                quantity: 12,
+                startDate: new Date(2026, 0, 28),
+                endDate: new Date(2026, 1, 1),
+                dueDate: new Date(2026, 0, 30),
+                status: "ready"
+            },
+            {
+                id: "WO-2026-010",
+                sku: "MOUNTING-PLATE-WELD",
+                quantity: 7,
+                startDate: new Date(2026, 0, 28),
+                endDate: new Date(2026, 0, 29),
+                dueDate: new Date(2026, 0, 28),
+                status: "ready"
+            }
+        ];
+        
+        // DOM elements
+        const calendarGrid = document.getElementById('calendar-grid');
+        const calendarDays = document.getElementById('calendar-days');
+        const currentMonthEl = document.getElementById('current-month');
+        const todayDisplay = document.getElementById('today-display');
+        const woList = document.getElementById('wo-list');
+        const prevMonthBtn = document.getElementById('prev-month');
+        const nextMonthBtn = document.getElementById('next-month');
+        const openModalBtn = document.getElementById('open-modal');
+        const closeModalBtn = document.getElementById('close-modal');
+        const cancelWoBtn = document.getElementById('cancel-wo');
+        const submitWoBtn = document.getElementById('submit-wo');
+        const deleteWoBtn = document.getElementById('delete-wo');
+        const addWoModal = document.getElementById('add-wo-modal');
+        const woForm = document.getElementById('wo-form');
+        const modalTitle = document.getElementById('modal-title');
+        const deleteSection = document.getElementById('delete-section');
+        const editIndexInput = document.getElementById('edit-index');
+        
+        // Initialize
+        function init() {
+            renderCalendar();
+            renderSelectedDateWorkOrders();
+            setupEventListeners();
+            setDefaultDates();
+        }
+        
+        // Set default dates in form
+        function setDefaultDates() {
+            const today = new Date(2026, 0, 27);
+            const tomorrow = new Date(2026, 0, 28);
+            const dayAfter = new Date(2026, 0, 29);
+            
+            document.getElementById('start-date').valueAsDate = today;
+            document.getElementById('end-date').valueAsDate = tomorrow;
+            document.getElementById('due-date').valueAsDate = tomorrow;
+        }
+        
+        // Render calendar day headers
+        function renderDayHeaders() {
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            calendarDays.innerHTML = '';
+            days.forEach(day => {
+                const dayEl = document.createElement('div');
+                dayEl.className = 'calendar-day-header';
+                dayEl.textContent = day;
+                calendarDays.appendChild(dayEl);
+            });
+        }
+        
+        // Get work order counts by status for a specific date
+        function getWOStatusCounts(date) {
+            const counts = { ready: 0, running: 0, completed: 0 };
+            
+            workOrders.forEach(wo => {
+                if (date >= wo.startDate && date <= wo.endDate) {
+                    counts[wo.status]++;
+                }
+            });
+            
+            return counts;
+        }
+        
+        // Render calendar
+        function renderCalendar() {
+            renderDayHeaders();
+            
+            // Update month/year display
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                              'July', 'August', 'September', 'October', 'November', 'December'];
+            currentMonthEl.textContent = `${monthNames[currentMonth]} ${currentYear}`;
+            
+            // Clear grid
+            calendarGrid.innerHTML = '';
+            
+            // Get first day of month and total days
+            const firstDay = new Date(currentYear, currentMonth, 1);
+            const lastDay = new Date(currentYear, currentMonth + 1, 0);
+            const totalDays = lastDay.getDate();
+            const startingDayOfWeek = firstDay.getDay(); // 0 = Sunday
+            
+            // Add empty cells for days before the first day
+            for (let i = 0; i < startingDayOfWeek; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = 'calendar-date';
+                calendarGrid.appendChild(emptyCell);
+            }
+            
+            // Add cells for each day of the month
+            for (let day = 1; day <= totalDays; day++) {
+                const dateCell = document.createElement('div');
+                dateCell.className = 'calendar-date';
+                dateCell.dataset.date = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                
+                const dateNumber = document.createElement('span');
+                dateNumber.className = 'date-number';
+                dateNumber.textContent = day;
+                dateCell.appendChild(dateNumber);
+                
+                // Check if this date has work orders (including multi-day WOs)
+                const checkDate = new Date(currentYear, currentMonth, day);
+                const statusCounts = getWOStatusCounts(checkDate);
+                const totalWOs = statusCounts.ready + statusCounts.running + statusCounts.completed;
+                
+                if (totalWOs > 0) {
+                    // Create container for badges
+                    const badgeContainer = document.createElement('div');
+                    badgeContainer.style.position = 'absolute';
+                    badgeContainer.style.bottom = '4px';
+                    badgeContainer.style.left = '50%';
+                    badgeContainer.style.transform = 'translateX(-50%)';
+                    badgeContainer.style.display = 'flex';
+                    badgeContainer.style.gap = '2px';
+                    badgeContainer.style.flexWrap = 'wrap';
+                    badgeContainer.style.justifyContent = 'center';
+                    
+                    // Add badges for each status with count > 0
+                    if (statusCounts.running > 0) {
+                        const runningBadge = document.createElement('div');
+                        runningBadge.className = 'status-badge badge-running';
+                        runningBadge.textContent = statusCounts.running;
+                        badgeContainer.appendChild(runningBadge);
+                    }
+                    
+                    if (statusCounts.ready > 0) {
+                        const readyBadge = document.createElement('div');
+                        readyBadge.className = 'status-badge badge-ready';
+                        readyBadge.textContent = statusCounts.ready;
+                        badgeContainer.appendChild(readyBadge);
+                    }
+                    
+                    if (statusCounts.completed > 0) {
+                        const completedBadge = document.createElement('div');
+                        completedBadge.className = 'status-badge badge-completed';
+                        completedBadge.textContent = statusCounts.completed;
+                        badgeContainer.appendChild(completedBadge);
+                    }
+                    
+                    dateCell.appendChild(badgeContainer);
+                }
+                
+                // Highlight today
+                if (currentYear === currentDate.getFullYear() && 
+                    currentMonth === currentDate.getMonth() && 
+                    day === currentDate.getDate()) {
+                    dateCell.classList.add('today');
+                }
+                
+                // Highlight selected date
+                if (currentYear === selectedDate.getFullYear() && 
+                    currentMonth === selectedDate.getMonth() && 
+                    day === selectedDate.getDate()) {
+                    dateCell.classList.add('selected');
+                }
+                
+                // Add click event
+                dateCell.addEventListener('click', () => selectDate(day));
+                
+                calendarGrid.appendChild(dateCell);
+            }
+        }
+        
+        // Select a date and show its work orders
+        function selectDate(day) {
+            // Remove selected class from all dates
+            document.querySelectorAll('.calendar-date').forEach(cell => {
+                cell.classList.remove('selected');
+            });
+            
+            // Update selected date
+            selectedDate = new Date(currentYear, currentMonth, day);
+            
+            // Add selected class to clicked date
+            const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const selectedCell = document.querySelector(`[data-date="${dateStr}"]`);
+            if (selectedCell) {
+                selectedCell.classList.add('selected');
+            }
+            
+            // Update display
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            todayDisplay.textContent = selectedDate.toLocaleDateString('en-US', options);
+            
+            // Show work orders for selected date
+            renderSelectedDateWorkOrders();
+        }
+        
+        // Show work orders for the selected date only
+        function renderSelectedDateWorkOrders() {
+            const filteredWOs = workOrders.filter(wo => {
+                // Only show WOs that are scheduled to run on the selected date
+                return selectedDate >= wo.startDate && selectedDate <= wo.endDate;
+            });
+            
+            woList.innerHTML = '';
+            
+            if (filteredWOs.length === 0) {
+                woList.innerHTML = '<div class="no-wo">No work orders scheduled for this date</div>';
+                return;
+            }
+            
+            // Sort by status priority: running, ready, completed
+            const statusPriority = { 'running': 1, 'ready': 2, 'completed': 3 };
+            filteredWOs.sort((a, b) => statusPriority[a.status] - statusPriority[b.status]);
+            
+            filteredWOs.forEach((wo, index) => {
+                const woItem = document.createElement('div');
+                woItem.className = 'wo-item';
+                
+                let statusClass = '';
+                let statusText = '';
+                switch(wo.status) {
+                    case 'ready':
+                        statusClass = 'status-ready-text';
+                        statusText = 'Ready to Run';
+                        break;
+                    case 'running':
+                        statusClass = 'status-running-text';
+                        statusText = 'In Progress';
+                        break;
+                    case 'completed':
+                        statusClass = 'status-completed-text';
+                        statusText = 'Completed';
+                        break;
+                }
+                
+                // Format dates
+                const startDateStr = wo.startDate.toLocaleDateString();
+                const endDateStr = wo.endDate.toLocaleDateString();
+                const dateRange = startDateStr === endDateStr ? 
+                    startDateStr : 
+                    `${startDateStr} - ${endDateStr}`;
+                
+                woItem.innerHTML = `
+                    <button class="edit-btn" data-index="${getGlobalIndex(wo)}">✏️</button>
+                    <div class="wo-header">
+                        <div class="wo-number">${wo.id}</div>
+                        <div class="wo-status ${statusClass}">${statusText}</div>
+                    </div>
+                    <div class="wo-details">
+                        <div class="detail-item">
+                            <div class="detail-label">SKU Name</div>
+                            <div class="detail-value">${wo.sku}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Quantity</div>
+                            <div class="detail-value">${wo.quantity} units</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Schedule</div>
+                            <div class="detail-value date-range">
+                                <span>📅</span> ${dateRange}
+                            </div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Due Date</div>
+                            <div class="detail-value">${wo.dueDate.toLocaleDateString()}</div>
+                        </div>
+                    </div>
+                `;
+                
+                woList.appendChild(woItem);
+            });
+            
+            // Add event listeners to edit buttons
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const globalIndex = parseInt(btn.dataset.index);
+                    openEditModal(globalIndex);
+                });
+            });
+        }
+        
+        // Get global index of a work order
+        function getGlobalIndex(wo) {
+            return workOrders.findIndex(item => item.id === wo.id);
+        }
+        
+        // Open edit modal with existing data
+        function openEditModal(index) {
+            const wo = workOrders[index];
+            editingIndex = index;
+            
+            // Set modal title
+            modalTitle.textContent = 'Edit Work Order';
+            deleteSection.style.display = 'block';
+            editIndexInput.value = index;
+            
+            // Populate form fields
+            document.getElementById('wo-id').value = wo.id;
+            document.getElementById('sku-name').value = wo.sku;
+            document.getElementById('quantity').value = wo.quantity;
+            document.getElementById('start-date').valueAsDate = wo.startDate;
+            document.getElementById('end-date').valueAsDate = wo.endDate;
+            document.getElementById('due-date').valueAsDate = wo.dueDate;
+            document.getElementById('status').value = wo.status;
+            
+            // Show modal
+            addWoModal.style.display = 'flex';
+        }
+        
+        // Open add modal
+        function openAddModal() {
+            editingIndex = -1;
+            modalTitle.textContent = 'Add New Work Order';
+            deleteSection.style.display = 'none';
+            woForm.reset();
+            setDefaultDates();
+            addWoModal.style.display = 'flex';
+        }
+        
+        // Validate form
+        function validateForm() {
+            let isValid = true;
+            const fields = ['wo-id', 'sku-name', 'quantity', 'start-date', 'end-date', 'due-date', 'status'];
+            
+            fields.forEach(field => {
+                const input = document.getElementById(field);
+                const error = document.getElementById(`${field}-error`);
+                
+                if (!input.checkValidity()) {
+                    error.style.display = 'block';
+                    isValid = false;
+                } else {
+                    error.style.display = 'none';
+                }
+            });
+            
+            // Additional validation for dates
+            const startDate = new Date(document.getElementById('start-date').value);
+            const endDate = new Date(document.getElementById('end-date').value);
+            const dueDate = new Date(document.getElementById('due-date').value);
+            
+            if (startDate > endDate) {
+                document.getElementById('end-date-error').textContent = 'End date must be after start date';
+                document.getElementById('end-date-error').style.display = 'block';
+                isValid = false;
+            }
+            
+            return isValid;
+        }
+        
+        // Add or update work order
+        function saveWorkOrder() {
+            if (!validateForm()) {
+                return;
+            }
+            
+            const woData = {
+                id: document.getElementById('wo-id').value,
+                sku: document.getElementById('sku-name').value,
+                quantity: parseInt(document.getElementById('quantity').value),
+                startDate: new Date(document.getElementById('start-date').value),
+                endDate: new Date(document.getElementById('end-date').value),
+                dueDate: new Date(document.getElementById('due-date').value),
+                status: document.getElementById('status').value
+            };
+            
+            if (editingIndex >= 0) {
+                // Update existing work order
+                workOrders[editingIndex] = woData;
+            } else {
+                // Add new work order
+                workOrders.push(woData);
+            }
+            
+            // Close modal and reset form
+            addWoModal.style.display = 'none';
+            woForm.reset();
+            
+            // Refresh calendar and work orders
+            renderCalendar();
+            renderSelectedDateWorkOrders();
+        }
+        
+        // Delete work order
+        function deleteWorkOrder() {
+            if (editingIndex >= 0) {
+                workOrders.splice(editingIndex, 1);
+                addWoModal.style.display = 'none';
+                renderCalendar();
+                renderSelectedDateWorkOrders();
+            }
+        }
+        
+        // Setup event listeners
+        function setupEventListeners() {
+            prevMonthBtn.addEventListener('click', () => {
+                currentMonth--;
+                if (currentMonth < 0) {
+                    currentMonth = 11;
+                    currentYear--;
+                }
+                renderCalendar();
+                renderSelectedDateWorkOrders();
+            });
+            
+            nextMonthBtn.addEventListener('click', () => {
+                currentMonth++;
+                if (currentMonth > 11) {
+                    currentMonth = 0;
+                    currentYear++;
+                }
+                renderCalendar();
+                renderSelectedDateWorkOrders();
+            });
+            
+            // Modal events
+            openModalBtn.addEventListener('click', openAddModal);
+            
+            closeModalBtn.addEventListener('click', () => {
+                addWoModal.style.display = 'none';
+                woForm.reset();
+            });
+            
+            cancelWoBtn.addEventListener('click', () => {
+                addWoModal.style.display = 'none';
+                woForm.reset();
+            });
+            
+            submitWoBtn.addEventListener('click', saveWorkOrder);
+            
+            deleteWoBtn.addEventListener('click', deleteWorkOrder);
+            
+            // Close modal when clicking outside
+            window.addEventListener('click', (e) => {
+                if (e.target === addWoModal) {
+                    addWoModal.style.display = 'none';
+                    woForm.reset();
+                }
+            });
+            
+            // Real-time validation
+            const inputs = woForm.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                input.addEventListener('input', () => {
+                    if (input.checkValidity()) {
+                        document.getElementById(`${input.id}-error`).style.display = 'none';
+                    }
+                });
+            });
+        }
+        
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
+
